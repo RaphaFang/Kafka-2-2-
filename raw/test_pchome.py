@@ -16,9 +16,9 @@ def get_item_info(item_id, ):
         print(f"Error: {response.status_code}")
         print(response.text)
 
-item_id = "v1|315072192061|0" 
-if item_id:
-    get_item_info(item_id)
+# item_id = "v1|315072192061|0" 
+# if item_id:
+#     get_item_info(item_id)
 
 
 # keyword 搜尋

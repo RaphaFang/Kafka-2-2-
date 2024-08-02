@@ -1,6 +1,8 @@
 import aiohttp
+import asyncio
 import os
 import json
+# import random
 from confluent_kafka import Producer
 from config import producer_conf
 
@@ -10,25 +12,65 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 producer = Producer(producer_conf)
 
 # ------------------------------------------------------------
-async def pc_get_id_info(item_id):
-    url = "https://real-time-amazon-data.p.rapidapi.com/product-details"
-    querystring = {"asin":item_id,"country":"US"}
-    headers = {
-	    "x-rapidapi-key": os.getenv('X_rapidapi_key'),
-	    "x-rapidapi-host": os.getenv('X_rapidapi_host')
-    }
+# keyword 搜尋(他是從第一頁開始)
+# https://ecshweb.pchome.com.tw/search/v3.3/all/results?q={keyword}&page={page}&sort=sortParm=rnk&sortOrder=dc
+# sort=sortParm=rnk&sortOrder=dc
+# 這是有綜合性的排序
 
+# proxies = [
+#         "https://107.22.64.25",
+#         # "http://proxy2.example.com:8080",
+#         # 添加更多代理伺服器
+# ]
+# proxy = random.choice(proxies)
+async def pc_get_keyword_info(keyword, page):
+    url = f"https://ecshweb.pchome.com.tw/search/v3.3/all/results?q={keyword}&page={page}&sort=sortParm=rnk&sortOrder=dc"
     async with aiohttp.ClientSession() as session:
-        async with session.get(url, headers=headers, params=querystring) as response:
+        async with session.get(url) as response:
             if response.status == 200:
-                item_data = await response.json()
-                logging.info(item_data)                
-                return item_data
+                response_text = await response.text()
+                json_obj = json.loads(response_text)
+                print(json_obj)
+
             else:
                 logging.error(f"Error: {response.status}")
                 logging.error(await response.text())
                 return response.status
-                
+
+
+# ------------------------------------------------------------
+# id 搜尋
+# https://ecapi.pchome.com.tw/ecshop/prodapi/v2/prod/{id}&_callback=jsonp_prod
+async def pc_get_id_info(item_id):
+    url = f"https://ecapi.pchome.com.tw/ecshop/prodapi/v2/prod/{item_id}&_callback=jsonp_prod"
+
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as response:
+            if response.status == 200:
+                response_text = await response.text()
+                response_text = response_text[15:-48]
+                json_obj = json.loads(response_text)
+                print(json_obj)
+
+            else:
+                logging.error(f"Error: {response.status}")
+                logging.error(await response.text())
+                return response.status
+            
+# ------------------------------------------------------------
+
+async def main():
+    # await pc_get_id_info("DHAK8A-1900HL6RJ")
+    await pc_get_keyword_info('iphone',"1")
+
+if __name__ == "__main__":
+    asyncio.run(main())    
+            
+
+# # 圖片的前墜：
+# https://img.pchome.com.tw/cs/{pic_url}
+# ------------------------------------------------------------
+
         # !這邊是真正多比資料的蒐集
         # api_urls = [
         #     'https://api.example.com/data1',
@@ -44,26 +86,21 @@ async def pc_get_id_info(item_id):
         #         send_to_kafka('my_topic', data)
 
 # ------------------------------------------------------------
-def delivery_report(err, msg):
-    if err:
-        print(f'Message delivery failed: {err}')
-    else:
-        print(f'Message delivered to {msg.topic()} [{msg.partition()}]')
+# def delivery_report(err, msg):
+#     if err:
+#         print(f'Message delivery failed: {err}')
+#     else:
+#         print(f'Message delivered to {msg.topic()} [{msg.partition()}]')
 
-def send_to_kafka(topic, data):
-    producer.produce(topic, json.dumps(data).encode('utf-8'), callback=delivery_report)
-    producer.flush()
+# def send_to_kafka(topic, data):
+#     producer.produce(topic, json.dumps(data).encode('utf-8'), callback=delivery_report)
+#     producer.flush()
 
-async def start_pc_producer():
-    item_id = "B09SM24S8C" 
+# async def start_pc_producer():
+#     item_id = "DHAK8A-1900HL6RJ" 
 
-    data = await amazon_get_id_info(item_id)
-    if data:
-        send_to_kafka('pc_topic', data)
+#     data = await pc_get_id_info(item_id)
+#     if data:
+#         send_to_kafka('pc_topic', data)
 
 
-
-# ! 流程
-# DB得到全部的item url，存放到 api_urls
-# 把api_urls的資料味進去 ebay_get_id_info()
-# ebay_get_id_info()的資料，最後送到 start_producer()

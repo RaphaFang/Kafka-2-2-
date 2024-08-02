@@ -22,7 +22,7 @@ def get_access_token(client_id, client_secret):
         print(f"Error getting token: {response.status_code}")
         return None
 
-access_token = get_access_token(client_id, client_secret)
+# access_token = get_access_token(client_id, client_secret)
 
 # ------------------------------------------------------------
 # def search_items_by_keyword(keyword, access_token):
@@ -68,6 +68,6 @@ def get_item_info(item_id, access_token):
         print(f"Error: {response.status_code}")
         print(response.text)
 
-item_id = "v1|315072192061|0" 
-if item_id:
-    get_item_info(item_id, access_token)
+# item_id = "v1|315072192061|0" 
+# if item_id:
+#     get_item_info(item_id, access_token)

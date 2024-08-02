@@ -16,18 +16,16 @@ import os
 # # ------------------------------------------------------------
 # id 查詢
 # 他有提供商品描述
-import requests
+# url = "https://real-time-amazon-data.p.rapidapi.com/product-details"
+# querystring = {"asin":"B09SM24S8C","country":"US"}
+# headers = {
+# 	"x-rapidapi-key": os.getenv('X_rapidapi_key'),
+# 	"x-rapidapi-host": os.getenv('X_rapidapi_host')
+# }
 
-url = "https://real-time-amazon-data.p.rapidapi.com/product-details"
-querystring = {"asin":"B09SM24S8C","country":"US"}
-headers = {
-	"x-rapidapi-key": os.getenv('X_rapidapi_key'),
-	"x-rapidapi-host": os.getenv('X_rapidapi_host')
-}
+# response = requests.get(url, headers=headers, params=querystring)
 
-response = requests.get(url, headers=headers, params=querystring)
-
-print(response.json())
+# print(response.json())
 
 # # # # ------------------------------------------------------------
 # # Product Offers
