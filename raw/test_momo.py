@@ -7,80 +7,114 @@ from bs4 import BeautifulSoup
 import aiohttp
 import asyncio
 
-
-STORE = 'momo'
-MOMO_MOBILE_URL = 'http://m.momoshop.com.tw/mosearch/%s'
 USER_AGENT_VALUE = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36'
 
-
-def get_web_content(query):
-    encoded_query = urllib.parse.quote(query)
-    query_url = MOMO_MOBILE_URL % encoded_query
+async def momo_get_keyword_info():
+    URL = "https://apisearch.momoshop.com.tw/momoSearchCloud/moec/textSearch"
     headers = {'User-Agent': USER_AGENT_VALUE}
-    resp = requests.get(query_url, headers=headers)
-    if not resp:
-        return []
-async def pc_get_keyword_info(keyword, page):
-    url = f"https://ecshweb.pchome.com.tw/search/v3.3/all/results?q={keyword}&page={page}&sort=sortParm=rnk&sortOrder=dc"
+    json_data = {
+    "host": "momoshop",
+    "flag": "searchEngine",
+    "data": {
+        "specialGoodsType": "",
+        "isBrandSeriesPage": False,
+        # "authorNo": "",
+        # "originalCateCode": "",
+        # "cateCode": "",
+        # "cateLevel": "-1",
+        # "cateType": "",
+        # "china": "N",
+        # "cod": "N",
+        # "cp": "N",
+        # "curPage": "1",
+        # "cycle": "N",
+        # "first": "N",
+        # "flag": 2018,
+        # "freeze": "N",
+        # "isBrandSeriesPage": False,
+        # "originalCateCode": "",
+        # "prefere": "N",
+        # "priceE": "99999999",
+        # "priceS": "0",
+        "reduceKeyword": "",
+        "adSource": "tenmax",
+        "addressSearchData": {},
+        "rtnCateDatainfo": {
+            "cateCode": "",
+            "cateLv": "-1",
+            "keyword": "iphone 15 pro",
+            "curPage": "1",
+            "historyDoPush": False,
+            "timestamp": 1722570967883
+        },
+        "searchType": "1",
+        "searchValue": "iphone 15 pro",
+        # "serviceCode": "MT01",
+        # "showType": "chessboardType",
+        # "specialGoodsType": "",
+        # "stockYN": "N",
+        # "superstore": "N",
+        # "superstorePay": "N",
+        # "threeHours": "N",
+        # "tomorrow": "N",
+        # "tvshop": "N",
+        # "video": "N"
+    }
+    }
+
     async with aiohttp.ClientSession() as session:
-        async with session.get(url) as response:
+        async with session.post(URL, headers=headers, json=json_data) as response:
             if response.status == 200:
-                response_text = response.text()
-                json_obj = json.loads(response_text)
-                print(json_obj)
+                data = await response.json()
+                data = data['rtnSearchData']['goodsInfoList']
+                print(data)
+                # json_obj = json.loads(response_text)
+                # print(json_obj)
 
     # print(resp)
     # return BeautifulSoup(resp.text, 'html.parser')
 
-query_str = 'iPhone 7 Plus 128G'
-get_web_content(query_str)
+# query_str = 'iPhone 7 Plus 128G'
+# get_web_content(query_str)
+                
+
+                
+# "https://www.momoshop.com.tw/goods/GoodsDetail.jsp?i_code=11859451&Area=search&oid=1_1&cid=index&kw=iphone%2015%20pro"
+
+# https://apisearch.momoshop.com.tw/momoSearchCloud/moec/goodsDetail?i_code=11859451
 
 
 
+import aiohttp
+from aiohttp import ClientOSError
 
-# def search_momo(query):
-#     dom = get_web_content(query)
-#     if dom:
-#         items = []
-#         for element in dom.find(id='itemizedStyle').ul.find_all('li'):
-#             item_name = element.find('p', 'prdName').text
-#             item_price = element.find('b', 'price').text.replace(',', '')
-#             if not item_price:
-#                 continue
-#             item_price = int(item_price)
-#             item_url = MOMO_MOBILE_URL + element.find('a')['href']
-#             item_img_url = element.a.img['src']
+async def momo_get_id_info():
+    URL = "https://www.momoshop.com.tw/goods/GoodsDetail.jsp?i_code=11982320&Area=search&oid=1_1&cid=index&kw=iphone"
+    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'}
 
-#             item = {
-#                 'name': item_name,
-#                 'price': item_price,
-#                 'url': item_url,
-#                 'img_url': item_img_url
-#             }
-
-#             items.append(item)
-#         return items
-
-
-
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(URL, headers=headers, timeout=aiohttp.ClientTimeout(total=30)) as response:
+                if response.status == 200:
+                    html_content = await response.text()
+                    soup = BeautifulSoup(html_content, 'html.parser')
+                    price = soup.find('span', class_='seoPrice')
+                    if price:
+                        print(price.text.strip())
+                    else:
+                        print("未找到价格信息")
+                else:
+                    print(f"请求失败，状态码：{response.status}")
+    except ClientOSError as e:
+        print(f"连接错误：{e}")
+    except Exception as e:
+        print(f"其他错误：{e}")
 
 
-# def main():
-#     query_str = 'iPhone 7 Plus 128G'
-#     items = search_momo(query_str)
-#     today = time.strftime('%m-%d')
-#     print('Search item \'%s\' from %s...' % (query_str, STORE))
-#     print('Search %d records on %s' % (len(items), today))
-#     for item in items:
-#         print(item)
-#     data = {
-#         'date': today,
-#         'store': STORE,
-#         'items': items
-#     }
 
-#     save_search_result(data)
+async def main():
+    # await momo_get_id_info()
+    await momo_get_keyword_info()
 
-
-# if __name__ == '__main__':
-#     main()
+if __name__ == "__main__":
+    asyncio.run(main())   
