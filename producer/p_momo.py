@@ -5,10 +5,9 @@ import json
 from bs4 import BeautifulSoup
 from confluent_kafka import Producer
 from config import producer_conf
-
 import logging
+# ------------------------------------------------------------
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-
 producer = Producer(producer_conf)
 
 # ------------------------------------------------------------
@@ -134,9 +133,9 @@ def send_to_kafka(topic, data):
     producer.produce(topic, json.dumps(data).encode('utf-8'), callback=delivery_report)
     producer.flush()
 
-async def start_pc_producer(keyword):
-    item_id = "11982320"
-    keyword = '放入搜尋字串'
+async def start_momo_producer(keyword):
+    # item_id = "11982320"
+    # keyword = '放入搜尋字串'
 
     data = await momo_get_keyword_info(keyword)
     # price = await momo_get_id_info(item_id)
